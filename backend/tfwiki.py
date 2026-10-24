@@ -14,6 +14,14 @@ SUBLINE_ALIASES = {
     'legacy united': 'legacy united',
     'titans return': 'titans return',
 }
+TOYLINE_ALIASES = {
+    'rotf': 'revenge of the fallen',
+    'revenge of fallen': 'revenge of the fallen',
+    'revenge of the fallen': 'revenge of the fallen',
+    'dotm': 'dark of the moon',
+    'aoe': 'age of extinction',
+    'tlk': 'the last knight',
+}
 GENERATION_CONTEXT = re.compile(r'(?is)\b(?:released|part of|from|in|under|within|belongs to|comes from)\s+(?:the\s+)?(?:first|second|third|fourth|final|\w+)?\s*(?:wave\s+of\s+)?(?:the\s+)?(?:transformers\s*:\s*)?(legacy\s*(?::|-)?\s*(?:evolution|united)?|classics|united|reveal\s+the\s+shield|combiner\s+wars|titans\s+return|power\s+of\s+the\s+primes|war\s+for\s+cybertron(?:\s+siege|\s+earthrise|\s+kingdom)?|age\s+of\s+the\s+primes|generations)')
 
 def normalize_heading(value: str) -> str:
@@ -22,7 +30,9 @@ def normalize_heading(value: str) -> str:
 def canonical_toyline(value: str) -> str:
     normalized = re.sub(r'\s+', ' ', value.lower().replace('_', ' ')).strip()
     normalized = normalized.replace('generation–1', 'generation-1')
-    return 'g1' if normalized in G1_ALIASES else normalized
+    if normalized in G1_ALIASES:
+        return 'g1'
+    return TOYLINE_ALIASES.get(normalized, normalized)
 
 def canonical_subline(value: str) -> str:
     normalized = re.sub(r'\s+', ' ', value.lower()).strip()
@@ -250,17 +260,20 @@ def search(character: str, prop: str, toyline: str, subline: str, size: str) -> 
         value = 0
         if character.lower() in item['product_name'].lower():
             value += 4
+        # Once the continuity-specific host page is resolved, property text
+        # is context rather than release evidence. The toyline and subline
+        # identify which product on that page the user wants.
         if c['property'].lower() == prop.lower():
-            value += 3
+            value += 1
         if toyline:
             requested_toyline = canonical_toyline(toyline)
             actual_toyline = canonical_toyline(c['toyline'])
             if actual_toyline == requested_toyline:
-                value += 8
+                value += 12
             elif requested_toyline == 'generations' and actual_toyline == 'generations' and canonical_subline(c['subline']) in GEN_SUBLINES:
-                value += 8
+                value += 12
             elif actual_toyline and actual_toyline != requested_toyline:
-                value -= 5
+                value -= 12
         if subline:
             requested_subline = canonical_subline(subline)
             actual_subline = canonical_subline(c['subline'])

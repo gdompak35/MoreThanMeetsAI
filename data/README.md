@@ -90,9 +90,15 @@ The search applies this logic in order:
 6. Use explicit description context as supporting evidence, such as “released
    in Legacy: United” or “Generations-styled.” Incidental references such as
    “Generation 1-style” do not identify the modern Generations toyline.
-7. Rank the entries against the user's toyline, subline, and size-class fields,
-   then return the best-supported entry with its own image and first complete
-   descriptive sentence.
+7. After the continuity-specific host page is resolved, treat that page as the
+   evidence for the fictional property. Do not let the property label outrank
+   the requested product line when selecting among entries on that page.
+   Normalize release aliases such as `ROTF` and `Revenge of the Fallen` to the
+   same toyline label.
+8. Rank the entries primarily against the user's toyline, then subline or
+   edition, then size class and character evidence. An explicit toyline match
+   must beat a same-character entry from a different toyline; return the
+   selected entry with its own image and first complete descriptive sentence.
 
 This is a general rule for every searched character. It is not a special case
 for Bumblebee, Prowl, or any other individual character.

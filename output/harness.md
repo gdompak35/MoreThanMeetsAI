@@ -7,6 +7,7 @@ The harness scope covers the complete local flow:
 - Search sends the entered fields to the FastAPI backend and displays the best TFWiki candidate.
 - TFWiki resolution checks the general toys section, the character page fallback, and dynamically discovered same-character branches whose URLs contain `toys`.
 - Toyline and subline fields are interpreted contextually. Recognized sublines are normalized to their parent toyline, including `Titans Return` to `Generations`.
+- After a continuity-specific page is found, verify that an explicit toyline match outranks the page's broad property context; for example, `ROTF` must select the `Revenge of the Fallen` section on a Movie Starscream page.
 - Card 2 always supports the three-position experience: best candidate, second candidate, and third candidate before search refinement.
 - Card 3 supports Toybox save, duplicate prevention, and local recall.
 - Card 4 displays the matched Unicron source and blocks interpretation without a source match.
