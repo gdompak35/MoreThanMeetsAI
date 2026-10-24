@@ -217,6 +217,21 @@ def get_entries(page: str, section_title: str, section_html: str, source_url: st
         resolved_size = metadata_size or heading_size
         size_evidence = 'product metadata' if metadata_size else 'size-class heading' if heading_size else ''
         entries.append({'candidate_id':f'{source_url}::{section_title}::plain::{index}::{name}', 'product_name':name,'image_url':image,'product_url':source_url+'#'+section_title,'criteria':{'character':character,'property':prop,'toyline':toyline,'subline':subline,'size_class':resolved_size,'year':year},'summary':sentence,'series':'','toyline_evidence':'section heading','subline_evidence':'section heading','size_evidence':size_evidence,'source_url':source_url+'#'+section_title,'section_heading':section_title,'entry_html':body[:5000]})
+    # A direct mold-reuse relationship normally preserves the source toy's
+    # size class. Use this only when the current entry has no explicit size
+    # evidence; explicit metadata or a dedicated heading wins.
+    for index, item in enumerate(entries):
+        if item['criteria'].get('size_class'):
+            continue
+        relationship = re.search(r'\b(?:re[- ]?deco|repaint|recolor|remold|remould|retool)\b.*?\b(?:of|from)\b', item.get('entry_html', ''), re.I)
+        if not relationship:
+            continue
+        for source in reversed(entries[:index]):
+            source_size = source['criteria'].get('size_class', '')
+            if source_size:
+                item['criteria']['size_class'] = source_size
+                item['size_evidence'] = 'relationship-inherited'
+                break
     return entries
 
 def search(character: str, prop: str, toyline: str, subline: str, size: str) -> dict:
@@ -316,8 +331,8 @@ def search(character: str, prop: str, toyline: str, subline: str, size: str) -> 
                 # Product metadata and a dedicated size-class heading are
                 # strong evidence. A descriptive comparison is deliberately
                 # not treated as equivalent evidence.
-                value += 9 if evidence in {'product metadata', 'size-class heading'} else 4
-            elif actual_size and evidence in {'product metadata', 'size-class heading'}:
+                value += 9 if evidence in {'product metadata', 'size-class heading'} else 7 if evidence == 'relationship-inherited' else 4
+            elif actual_size and evidence in {'product metadata', 'size-class heading', 'relationship-inherited'}:
                 # Size is a ranking signal, not a hard exclusion.
                 value -= 2
             elif re.search(rf'\b{re.escape(requested_size)}(?:\s+class)?\b', text, re.I):

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -34,23 +35,48 @@ def _portkey_request(prompt: dict, max_tokens: int = 700):
         content = json.loads(response.read().decode())['choices'][0]['message']['content']
     return _parse_portkey_json(content)
 
+def _size_priority(fields, item):
+    requested = str(fields.get('size_class', '')).lower().strip()
+    if not requested:
+        return 0
+    requested = re.sub(r'\s+class(?:\s+toys?)?\b', '', requested).strip()
+    actual = str((item.get('criteria') or {}).get('size_class', '')).lower().strip()
+    actual = re.sub(r'\s+class(?:\s+toys?)?\b', '', actual).strip()
+    evidence = item.get('size_evidence', '')
+    if actual == requested:
+        return 3 if evidence in {'product metadata', 'size-class heading', 'relationship-inherited'} else 2
+    if not actual:
+        return 1
+    return 0
+
+def _apply_size_guard(fields, candidates, order):
+    # Portkey interprets the full records, but explicit size evidence is a
+    # deterministic catalog fact. Preserve the model's ordering within each
+    # evidence group while preventing a known non-match from outranking a
+    # supported match. Missing size data remains eligible.
+    unique = []
+    for index in order + list(range(len(candidates))):
+        if isinstance(index, int) and 0 <= index < len(candidates) and index not in unique:
+            unique.append(index)
+    return sorted(unique, key=lambda index: (-_size_priority(fields, candidates[index]), unique.index(index)))
+
 
 def rank(fields, candidates, tfwiki_entry=None, source_page=None):
     key = os.getenv('PORTKEY_API_KEY', '').strip()
     if not key or not candidates or os.getenv('MORETHANMEETSAI_INTERPRETATION_ENABLED', 'true').lower() != 'true':
-        return list(range(len(candidates)))
+        return _apply_size_guard(fields, candidates, list(range(len(candidates))))
     prompt = {
         'fields': fields,
         'tfwiki_entry': tfwiki_entry or {},
         'candidates': [{'index': i, **{k: item.get(k) for k in ('product_name', 'criteria', 'series', 'toyline_evidence', 'subline_evidence', 'size_evidence', 'summary', 'source_url', 'section_heading', 'entry_html')}} for i, item in enumerate(candidates)],
-        'instruction': 'Return JSON only: {"order":[candidate indexes]}. Rank candidates against every user field and the confirmed TFWiki identity. Treat subline or edition as structured evidence just like toyline: an exact section heading or explicit Series metadata is strong evidence, explicit release language is next, and an incidental word in a description is weak evidence. Treat size class the same way: an explicit product metadata size or dedicated size-class heading is strong evidence; a description saying a toy is similar to, comparable to, or related to another size class is weak evidence and must not classify the toy as that size. Prefer an exact size-class match when supported, but do not hard-exclude a candidate solely because size evidence is missing. Prefer an exact subline match over a generic parent-toyline match. Do not let a generic word such as prime or an incidental Generation 1 reference override explicit toyline, subline, or size metadata.',
+        'instruction': 'Return JSON only: {"order":[candidate indexes]}. Rank candidates against every user field and the confirmed TFWiki identity. Treat subline or edition as structured evidence just like toyline: an exact section heading or explicit Series metadata is strong evidence, explicit release language is next, and an incidental word in a description is weak evidence. Treat size class the same way: an explicit product metadata size or dedicated size-class heading is strong evidence. A direct statement that the entry is a redeco, repaint, recolor, remold, or retool of another toy normally inherits that source toy\'s size class when no conflicting explicit size evidence is present; rare exceptions require evidence. A description saying a toy is merely similar to, comparable to, or related to another size class is weak evidence and must not classify the toy as that size. Prefer an exact size-class match when supported, but do not hard-exclude a candidate solely because size evidence is missing. Prefer an exact subline match over a generic parent-toyline match. Do not let a generic word such as prime or an incidental Generation 1 reference override explicit toyline, subline, or size metadata.',
     }
     try:
         data = _portkey_request(prompt, 160)
         order = data.get('order', []) if data else []
-        return [i for i in order if isinstance(i, int) and 0 <= i < len(candidates)] + [i for i in range(len(candidates)) if i not in order]
+        return _apply_size_guard(fields, candidates, [i for i in order if isinstance(i, int) and 0 <= i < len(candidates)])
     except Exception:
-        return list(range(len(candidates)))
+        return _apply_size_guard(fields, candidates, list(range(len(candidates))))
 
 
 def interpret_related_toy(fields, tfwiki_entry):

@@ -55,7 +55,12 @@ toyline, then subline or edition and size class; it does not allow a broad
 property label such as `Movie (2007)` to outrank an explicit release match such
 as `ROTF` / `Revenge of the Fallen`. Size class is ranked across all supported
 classes using explicit product metadata or dedicated size-class headings; an
-incidental comparison in a description is not treated as the toy's size.
+incidental comparison in a description is not treated as the toy's size. A
+deterministic post-interpretation guard keeps supported exact size matches
+ahead of known conflicting classes while preserving candidates with missing
+size information. Explicit redeco, repaint, recolor, remold, or retool
+relationships may inherit the source toy's size class unless stronger metadata
+shows an exception.
 
 Card 2 always preserves the three-position experience: the best result, a second candidate, and a third candidate before `Refine my search`. Card 3 confirms the selected toy and can save it to the device-local Toybox.
 

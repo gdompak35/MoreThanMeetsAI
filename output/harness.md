@@ -9,6 +9,8 @@ The harness scope covers the complete local flow:
 - Toyline and subline fields are interpreted contextually. Recognized sublines are normalized to their parent toyline, including `Titans Return` to `Generations`.
 - After a continuity-specific page is found, verify that an explicit toyline match outranks the page's broad property context; for example, `ROTF` must select the `Revenge of the Fallen` section on a Movie Starscream page.
 - Verify size ranking across classes: explicit product metadata or headings such as Voyager, Deluxe, Leader, and Legends must outrank a description that only compares a toy to another size class, without excluding entries that lack size evidence.
+- Verify that this size ordering remains in place after the Portkey ranking response; a known Legends entry must not displace a supported Voyager entry when Voyager is requested.
+- Verify that explicit redeco, repaint, recolor, remold, and retool relationships inherit the source size only when the entry lacks stronger contradictory metadata.
 - Card 2 always supports the three-position experience: best candidate, second candidate, and third candidate before search refinement.
 - Card 3 supports Toybox save, duplicate prevention, and local recall.
 - Card 4 displays the matched Unicron source and blocks interpretation without a source match.

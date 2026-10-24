@@ -22,6 +22,7 @@
 
 - Keep TFWiki entry evidence attached to the specific product it supports. A heading or explicit release statement may establish toyline or subline context; a similar product name in another heading must not be substituted.
 - Treat character identity, fictional property, parent toyline, subline, and size class as separate concepts.
+- A direct redeco, repaint, recolor, remold, or retool relationship normally preserves the source toy's size class when the current entry lacks explicit size evidence; do not apply that inheritance when stronger metadata shows an exception.
 - Once a continuity-specific character page is resolved, use that page as the fictional-property context. When choosing among its entries, an explicit toyline match—such as `ROTF` / `Revenge of the Fallen`—must outrank the broad property label used to find the page, such as `Movie (2007)`.
 - Treat weapons and other accessories as separate tracked objects. A piece leaving a hand or body may be an accessory and must not be called missing without evidence.
 - Portkey may inspect TFWiki, Unicron, and instruction imagery for supported warnings about fragile parts, breakage, degrading plastics, rubber or other textures, paint or clear parts, liquid features, small-parts hazards, and force.

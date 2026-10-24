@@ -101,8 +101,15 @@ The search applies this logic in order:
    Class toys`, `Deluxe Class toys`, `Leader Class toys`, or `Legends Class
    toys` is strong evidence. A description that says a toy is similar to,
    comparable to, or related to another size class is weak evidence and must
-   not classify the toy as that size. Size evidence raises or lowers ranking
+   not classify the toy as that size. An explicit statement that a toy is a
+   redeco, repaint, recolor, remold, or retool of another toy normally carries
+   over the source toy's size class when no conflicting size metadata exists;
+   rare exceptions require evidence. Size evidence raises or lowers ranking
    confidence but does not hard-exclude an entry when the field is missing.
+   After Portkey ranks the candidates, a deterministic size-evidence guard
+   preserves this rule: supported exact matches remain ahead of known
+   conflicting size classes while records with missing size data remain
+   eligible.
    An explicit toyline match must beat a same-character entry from a different
    toyline; return the selected entry with its own image and first complete
    descriptive sentence.
