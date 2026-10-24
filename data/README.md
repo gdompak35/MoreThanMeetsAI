@@ -157,9 +157,11 @@ records whose titles do not identify the confirmed toy—the backend makes one
 bounded Portkey interpretation call over the confirmed TFWiki toy entry. Portkey must
 identify explicit redeco, recolor, repaint, retool, or remold language and a
 nearby linked comparison toy. The returned TFWiki URL is validated, then the
-related character name is searched in Unicron. If that succeeds, Card 4 says
-that the original toy was not found and clearly labels the instructions as
-belonging to the related alternate. If Portkey is unavailable, the local
+related character name is searched in Unicron. If that succeeds, Card 4 names
+the confirmed toy and says, for example, `I couldn't find the instructions for
+Nebular Starscream so I found the instructions for a redeco of it!` The
+relationship word is taken from the TFWiki/Portkey evidence (`repaint`,
+`retool`, `recolor`, `remold`, or `redeco`). If Portkey is unavailable, the local
 parser may use the same strict nearby-link rule as a fallback; it never treats
 a generic mention as a relationship.
 

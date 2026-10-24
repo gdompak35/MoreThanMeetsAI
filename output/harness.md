@@ -13,6 +13,7 @@ The harness scope covers the complete local flow:
 - Verify that explicit redeco, repaint, recolor, remold, and retool relationships inherit the source size only when the entry lacks stronger contradictory metadata.
 - For Card 4, verify that the confirmed TFWiki size is carried into Unicron ranking; a `Voyager` title must outrank a conflicting `Legends` title for a Voyager redeco.
 - Verify the initial Unicron priority order: confirmed character, toyline/subline, then size class. A character-level result without the confirmed toy identity must trigger the TFWiki related-toy fallback instead of being treated as a direct match.
+- Verify fallback messaging names the confirmed toy and uses the evidenced relationship term, for example: `I couldn't find the instructions for Nebular Starscream so I found the instructions for a redeco of it!`.
 - Card 2 always supports the three-position experience: best candidate, second candidate, and third candidate before search refinement.
 - Card 3 supports Toybox save, duplicate prevention, and local recall.
 - Card 4 displays the matched Unicron source and blocks interpretation without a source match.

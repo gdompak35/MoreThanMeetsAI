@@ -51,6 +51,9 @@ def instructions(payload:InstructionInput):
             alternate_first=(alternate.get('matches') or [None])[0]
             alternate_alignment=source_alignment_count(related_entry or {}, alternate_first)[0] if alternate_first and related_entry else 0
             if alternate.get('matches') and alternate_alignment == 3:
+                original_name=payload.tfwiki_entry.get('product_name') or fields.get('character','that toy')
+                relationship=alternate.get('relationship', related.get('relationship', 'related toy'))
+                alternate['message']=f"I couldn't find the instructions for {original_name} so I found the instructions for a {relationship} of it!"
                 return alternate
             if direct and result.get('status') == 'match' and first_alignment >= 2:
                 return result

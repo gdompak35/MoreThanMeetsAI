@@ -284,5 +284,7 @@ def search_related(fields, tfwiki_entry, related):
         result['relationship'] = related.get('relationship', 'related toy')
         result['related_tfwiki_url'] = related.get('url', '')
         result['relationship_source'] = related.get('interpreted_by', 'TFWiki entry')
-        result['message'] = "I couldn't find your original toy but I found a " + related.get('relationship', 'related toy') + " of it. Here are its instructions."
+        original_name = (tfwiki_entry or {}).get('product_name') or fields.get('character', 'that toy')
+        relationship = related.get('relationship', 'related toy')
+        result['message'] = f"I couldn't find the instructions for {original_name} so I found the instructions for a {relationship} of it!"
     return result
