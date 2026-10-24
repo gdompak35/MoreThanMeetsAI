@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 
 BASE_URL = 'https://www.unicron.com/tfitem/itemimage_db.php?mode=instructions&seriesID=23'
+SIZE_LABELS = ('commander', 'deluxe', 'leader', 'voyager', 'legends', 'scout', 'basic', 'core', 'titan', 'ultimate', 'supreme', 'masterpiece')
 LEGACY_CATALOG_PAGES = {
     'titans return': 'https://www2.unicron.com/2017-transformers/581-2017-generations.html',
 }
@@ -135,18 +136,69 @@ def _entry_score(item, fields, tfwiki_entry):
     name = _norm(item.get('product_name', ''))
     text = _norm(item.get('entry_html', ''))
     score = 0
+    character = _norm(fields.get('character', ''))
     property_name = _norm(fields.get('property', ''))
     confirmed_name = _norm(tfwiki_entry.get('product_name', ''))
     confirmed_tokens = [token for token in confirmed_name.split() if len(token) > 2]
+    if character and character in name:
+        score += 1000
     score += sum(2 for token in confirmed_tokens if token in name)
+    score += _series_score(fields.get('toyline', ''), item.get('series_title', ''))
     if property_name in {'g1', 'gen 1', 'generation 1', 'generation 1'}:
         if any(marker in name or marker in text for marker in ('1986', 'tftm', 'generation 1', 'g1')):
             score += 8
         else:
             score -= 3
-    if fields.get('toyline') and _norm(fields['toyline']) in name:
-        score += 3
+    if fields.get('subline') and _norm(fields['subline']) in name:
+        score += 80
+    confirmed_size = _norm((tfwiki_entry.get('criteria') or {}).get('size_class', '') or fields.get('size_class', ''))
+    requested_size = next((label for label in SIZE_LABELS if label in confirmed_size), '')
+    if requested_size:
+        # Unicron often puts the size in the instruction title. A title-level
+        # match is stronger than a shared character name, especially when the
+        # confirmed TFWiki toy is a redeco whose name is absent from Unicron.
+        if re.search(rf'\b{re.escape(requested_size)}(?:\s+class)?\b', name):
+            score += 24
+        elif re.search(rf'\b{re.escape(requested_size)}(?:\s+class)?\b', text):
+            score += 8
+        for other in SIZE_LABELS:
+            if other != requested_size and re.search(rf'\b{re.escape(other)}(?:\s+class)?\b', name):
+                score -= 14
     return score
+
+def has_direct_match(result, tfwiki_entry):
+    """Require the Unicron title to identify the confirmed toy itself."""
+    confirmed = _norm(tfwiki_entry.get('product_name', ''))
+    if not confirmed:
+        return bool(result.get('matches'))
+    ignored = {'class', 'toy', 'figure', 'series', 'version', 'edition', 'the', 'of', 'and', 'with', 'vs'}
+    confirmed_tokens = [token for token in confirmed.split() if token not in ignored]
+    for item in result.get('matches', []):
+        name = _norm(item.get('product_name', ''))
+        if confirmed == name or confirmed in name or name in confirmed:
+            return True
+        if confirmed_tokens and all(token in name.split() for token in confirmed_tokens):
+            return True
+    return False
+
+def source_alignment_count(tfwiki_entry, unicron_entry):
+    """Compare only evidence present in the two retrieved source records."""
+    criteria = tfwiki_entry.get('criteria') or {}
+    character = _norm(criteria.get('character', ''))
+    product_name = _norm(unicron_entry.get('product_name', ''))
+    primary_name = re.split(r'\b(?:with|vs)\b', product_name, maxsplit=1)[0].strip()
+    character_match = bool(character and character in primary_name)
+
+    toyline = criteria.get('toyline', '')
+    toyline_match = bool(toyline and _series_score(toyline, unicron_entry.get('series_title', '')) > 0)
+
+    size = next((label for label in SIZE_LABELS if label in _norm(criteria.get('size_class', ''))), '')
+    size_match = bool(size and re.search(rf'\b{re.escape(size)}(?:\s+class)?\b', product_name))
+    return sum((character_match, toyline_match, size_match)), {
+        'character': character_match,
+        'toyline': toyline_match,
+        'size_class': size_match,
+    }
 
 def _legacy_catalog_matches(fields, tfwiki_entry):
     requested = _norm(fields.get('subline') or fields.get('toyline', ''))
@@ -208,6 +260,7 @@ def search(fields, tfwiki_entry):
         matches = []
         for page, _ in pages:
             for item in _entries(page, fields, tfwiki_entry):
+                item['series_title'] = series['title']
                 if not any(existing['product_url'] == item['product_url'] for existing in matches): matches.append(item)
         matches.sort(key=lambda item: _entry_score(item, fields, tfwiki_entry), reverse=True)
         catalog_matches = _legacy_catalog_matches(fields, tfwiki_entry)

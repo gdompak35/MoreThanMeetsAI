@@ -134,8 +134,16 @@ then checks its finite year pages and keeps each instruction name, image, and
 instruction-detail link together. The confirmed TFWiki entry and the user's
 fields guide character matching. Unicron is the active instruction source;
 Transformersland and Hasbro are not used in this workflow.
-When multiple Unicron records share a character name, Card 4 ranks them using
-the requested property plus the confirmed TFWiki product name and context.
+When multiple Unicron records share a character name, Card 4 ranks them in
+this order: character alignment with the confirmed TFWiki entry, toyline or
+subline alignment, then size class. Size remains important but cannot
+compensate for a weaker character or toyline match. Card 4 also ranks them
+using the requested property plus the confirmed TFWiki product context.
+The confirmed TFWiki size class is also carried into this handoff. An explicit
+size in the Unicron instruction title, such as `Starscream (Voyager)`, outranks
+a same-character title from another class, such as `Legends Starscream`, even
+when the selected TFWiki toy is a redeco whose exact name is not present in
+Unicron.
 This prevents a G1 Studio Series record such as `Grimlock w/ Wheelie (1986
 TFTM)` from being displaced by an unrelated movie-era Grimlock record.
 For multipacks, names after `with`, `vs.`, or `&` are secondary characters;
@@ -144,8 +152,9 @@ named `Sunstorm VS Autobot Ratchet` selects the Sunstorm multipack instruction
 record and its linked Sunstorm-vs-Ratchet toy page, not Ratchet's separate
 instruction record.
 
-If Unicron has no direct instruction match, the backend makes one bounded
-Portkey interpretation call over the confirmed TFWiki toy entry. Portkey must
+If Unicron has no direct instruction match—or only returns character-level
+records whose titles do not identify the confirmed toy—the backend makes one
+bounded Portkey interpretation call over the confirmed TFWiki toy entry. Portkey must
 identify explicit redeco, recolor, repaint, retool, or remold language and a
 nearby linked comparison toy. The returned TFWiki URL is validated, then the
 related character name is searched in Unicron. If that succeeds, Card 4 says

@@ -10,7 +10,7 @@ load_dotenv(PROJECT_ROOT.parent / '.env', override=False)
 
 from backend.tfwiki import normalize_search_fields, search, related_toy_from_entry
 from backend.interpreter import rank, interpret_related_toy, interpret_instruction_steps
-from backend.unicron import search as search_unicron, search_related, instruction_context
+from backend.unicron import search as search_unicron, search_related, instruction_context, has_direct_match, source_alignment_count
 app=FastAPI(title='MoreThanMeetsAI V2')
 app.add_middleware(CORSMiddleware,allow_origins=['*'],allow_methods=['*'],allow_headers=['*'])
 class SearchInput(BaseModel):
@@ -33,14 +33,31 @@ def first_card(payload:SearchInput): return {'status':'accepted','message':'Iden
 def instructions(payload:InstructionInput):
     fields=payload.model_dump(exclude={'tfwiki_entry'})
     result=search_unicron(fields,payload.tfwiki_entry)
-    if result.get('status') == 'no_match':
+    first = (result.get('matches') or [None])[0]
+    direct = has_direct_match(result, payload.tfwiki_entry)
+    first_alignment = source_alignment_count(payload.tfwiki_entry, first)[0] if first else 0
+    # A direct result that satisfies character and toyline but misses size is
+    # eligible for a related-toy check. A two-of-three fallback does not
+    # displace it; only a source-supported three-of-three fallback wins.
+    should_check_related = result.get('status') == 'no_match' or not direct or first_alignment < 3
+    if should_check_related:
         related=interpret_related_toy(fields,payload.tfwiki_entry)
         if not related:
             related=related_toy_from_entry(payload.tfwiki_entry)
         if related:
-            alternate=search_related(fields,payload.tfwiki_entry,related)
-            if alternate.get('matches'):
+            related_result=search(related.get('name',''), fields.get('property',''), fields.get('toyline',''), fields.get('subline',''), fields.get('size_class',''))
+            related_entry=(related_result.get('matches') or [None])[0]
+            alternate=search_related(fields,related_entry or payload.tfwiki_entry,related)
+            alternate_first=(alternate.get('matches') or [None])[0]
+            alternate_alignment=source_alignment_count(related_entry or {}, alternate_first)[0] if alternate_first and related_entry else 0
+            if alternate.get('matches') and alternate_alignment == 3:
                 return alternate
+            if direct and result.get('status') == 'match' and first_alignment >= 2:
+                return result
+        if result.get('status') == 'match' and not direct:
+            result['status'] = 'no_match'
+            result['matches'] = []
+            result['message'] = 'The exact toy was not found in Unicron, and no verified related-toy instruction match was found.'
     return result
 @app.post('/api/instructions/steps')
 def instruction_steps(payload:InstructionStepsInput):

@@ -72,6 +72,16 @@ If the instruction archive does not expose the exact toy record, a bounded Unicr
 
 Card 5 sends the TFWiki entry, Unicron toy record, instruction page, and instruction images to Portkey. It presents supported safety and accessory notes, states the starting and destination modes, and provides one step at a time. Steps must independently describe perspective and changes in orientation for blind or low-vision users; they must not say “as shown,” refer to an unseen inset or arrow, or rely on the user having the source image open.
 
+Card 4 carries the confirmed TFWiki size class into Unicron matching. When
+multiple instruction records share a character, an explicit size in the
+Unicron title is prioritized over a conflicting size, including when the
+TFWiki toy is a redeco with a different product name.
+
+Unicron ranking first requires character alignment, then toyline or subline
+alignment, and then size class. If Unicron has only a character-level result
+whose title does not identify the confirmed toy, the app uses the TFWiki
+redeco/repaint/recolor/remold/retool fallback before presenting instructions.
+
 Card 5 supports `Go back`, left/right arrow navigation, and text-to-speech. The keyboard controls are announced once when Card 5 opens; space pauses or resumes speech, and a double-tap repeats the current instruction.
 
 Generated instructions are assistive guidance, not a definitive guarantee. Users should stop if a movement is unclear or resisted, and working with another person is encouraged. A full launch should involve appropriate collaboration with Hasbro and established Transformers fan resources regarding permissions, attribution, source preservation, and accessibility.

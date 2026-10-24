@@ -357,9 +357,14 @@ def related_toy_from_entry(entry: dict) -> dict | None:
     """
     markup = entry.get('entry_html', '') or ''
     relation = re.compile(r'(?i)\b(redeco(?:lor)?|recolou?r|repaint|retool(?:ed)?|remold(?:ed)?|uses the mold of|based on|reuses the mold of)\b')
+    character = (entry.get('criteria') or {}).get('character', '')
     for anchor in re.finditer(r'(?is)<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', markup):
         href, label = anchor.group(1), clean(anchor.group(2))
         if not label or href.startswith('#') or re.search(r'(?i)(?:File:|Category:|Template:|Special:)', href):
+            continue
+        if re.fullmatch(r'(?i)(?:reco?lo?r|repaint|redeco|retool|remold|remould|exclusive|revenge of the fallen|movie)', label):
+            continue
+        if character and character.lower() not in label.lower():
             continue
         context = clean(markup[max(0, anchor.start() - 500):min(len(markup), anchor.end() + 500)])
         relation_match = relation.search(context)
@@ -368,8 +373,14 @@ def related_toy_from_entry(entry: dict) -> dict | None:
         if href.startswith('/'):
             url = 'https://tfwiki.net' + href
         elif href.startswith('http'):
+            if 'tfwiki.net' not in href.lower():
+                continue
             url = href
         else:
             continue
         return {'name': label, 'url': url, 'relationship': relation_match.group(1).lower()}
+    if relation.search(clean(markup)) and character and re.search(rf'\b{re.escape(character)}\b', clean(markup), re.I):
+        source_url = entry.get('source_url', '')
+        if source_url:
+            return {'name': character, 'url': source_url.split('#', 1)[0], 'relationship': relation.search(clean(markup)).group(1).lower()}
     return None

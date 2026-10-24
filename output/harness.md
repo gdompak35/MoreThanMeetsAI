@@ -11,6 +11,8 @@ The harness scope covers the complete local flow:
 - Verify size ranking across classes: explicit product metadata or headings such as Voyager, Deluxe, Leader, and Legends must outrank a description that only compares a toy to another size class, without excluding entries that lack size evidence.
 - Verify that this size ordering remains in place after the Portkey ranking response; a known Legends entry must not displace a supported Voyager entry when Voyager is requested.
 - Verify that explicit redeco, repaint, recolor, remold, and retool relationships inherit the source size only when the entry lacks stronger contradictory metadata.
+- For Card 4, verify that the confirmed TFWiki size is carried into Unicron ranking; a `Voyager` title must outrank a conflicting `Legends` title for a Voyager redeco.
+- Verify the initial Unicron priority order: confirmed character, toyline/subline, then size class. A character-level result without the confirmed toy identity must trigger the TFWiki related-toy fallback instead of being treated as a direct match.
 - Card 2 always supports the three-position experience: best candidate, second candidate, and third candidate before search refinement.
 - Card 3 supports Toybox save, duplicate prevention, and local recall.
 - Card 4 displays the matched Unicron source and blocks interpretation without a source match.
