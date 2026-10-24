@@ -102,6 +102,23 @@ def fetch(url: str) -> str:
 def clean(value: str) -> str:
     return re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', value))).strip()
 
+def size_from_heading(value: str) -> str:
+    """Return a size class only when a nested toys heading names one."""
+    text = clean(value).lower()
+    match = re.search(r'\b(commander|deluxe|leader|voyager|titan|legends?|scout|basic|core|micro|supreme|ultimate|masterpiece)\b', text)
+    if not match:
+        return ''
+    label = match.group(1)
+    return 'Legends' if label.startswith('legend') else label.title()
+
+def canonical_size(value: str) -> str:
+    normalized = re.sub(r'\s+class(?:\s+toys?)?\b', '', value.lower()).strip()
+    return re.sub(r'\s+', ' ', normalized)
+
+def nested_size_heading(section_html: str, offset: int) -> str:
+    headings = list(re.finditer(r'(?is)<h[4-6][^>]*>.*?</h[4-6]>', section_html[:offset]))
+    return size_from_heading(headings[-1].group(0)) if headings else ''
+
 def article_candidates(character: str, prop: str) -> list[str]:
     continuity = re.sub(r'\s*\([^)]*\)', '', prop).strip()
     aliases = {'bumblebee movie':'Movie','movie (2007)':'Movie','dark of the moon':'Movie','dotm':'Movie','age of extinction':'Movie','aoe':'Movie','the last knight':'Movie','tlk':'Movie','animated':'Animated','armada':'Armada','g1':'G1','gen 1':'G1','generation 1':'G1','generation-1':'G1','generation1':'G1','beast wars':'Beast Wars','beast machines':'Beast Machines','prime':'Prime','transformers: one (2024)':'One','transformers one (2024)':'One','revenge of the fallen':'ROTF','revenge of fallen':'ROTF','movie revenge of the fallen':'ROTF','rotf':'ROTF'}
@@ -167,14 +184,18 @@ def get_entries(page: str, section_title: str, section_html: str, source_url: st
             toyline = 'Generations'
             label_key = re.sub(r'\s+', ' ', label.lower()).replace('-', ':')
             subline = 'Legacy: Evolution' if 'evolution' in label_key else 'Legacy United' if 'united' in label_key else 'Legacy' if 'legacy' in label_key else label.title()
-        entries.append({'candidate_id':f'{source_url}::{section_title}::{index}::{name}', 'product_name':name,'image_url':image,'product_url':source_url+'#'+section_title,'criteria':{'character':character,'property':prop,'toyline':toyline,'subline':subline,'size_class':size,'year':year},'summary':sentence,'series':series,'toyline_evidence':evidence,'subline_evidence':evidence,'source_url':source_url+'#'+section_title,'section_heading':section_title,'entry_html':body[:5000]})
+        heading_size = nested_size_heading(section_html, block.start())
+        resolved_size = size or heading_size
+        size_evidence = 'product metadata' if size else 'size-class heading' if heading_size else ''
+        entries.append({'candidate_id':f'{source_url}::{section_title}::{index}::{name}', 'product_name':name,'image_url':image,'product_url':source_url+'#'+section_title,'criteria':{'character':character,'property':prop,'toyline':toyline,'subline':subline,'size_class':resolved_size,'year':year},'summary':sentence,'series':series,'toyline_evidence':evidence,'subline_evidence':evidence,'size_evidence':size_evidence,'source_url':source_url+'#'+section_title,'section_heading':section_title,'entry_html':body[:5000]})
     # Some TFWiki sections use a plain nested list instead of iconlist. The
     # first bold product name still marks the entry boundary, so preserve it
     # rather than dropping the entire section.
     plain = list(re.finditer(r'(?is)<ul(?:\s[^>]*)?>\s*<li[^>]*>\s*<b>(.*?)</b>\s*\((.*?)\)\s*', section_html))
     for index, match in enumerate(plain):
         name = clean(match.group(1))
-        if any(item['product_name'] == name for item in entries):
+        candidate_size = size_from_heading(match.group(2)) or nested_size_heading(section_html, match.start())
+        if any(item['product_name'] == name and canonical_size(item['criteria'].get('size_class', '')) == canonical_size(candidate_size) for item in entries):
             continue
         end = plain[index + 1].start() if index + 1 < len(plain) else len(section_html)
         body = section_html[match.end():end]
@@ -191,7 +212,11 @@ def get_entries(page: str, section_title: str, section_html: str, source_url: st
         elif image.startswith('/'): image = 'https://tfwiki.net' + image
         sentence = re.split(r'(?<=[.!?])\s+', description, maxsplit=1)[0][:500]
         toyline, subline = toyline_from_heading(section_title)
-        entries.append({'candidate_id':f'{source_url}::{section_title}::plain::{index}::{name}', 'product_name':name,'image_url':image,'product_url':source_url+'#'+section_title,'criteria':{'character':character,'property':prop,'toyline':toyline,'subline':subline,'size_class':'','year':year},'summary':sentence,'series':'','toyline_evidence':'section heading','subline_evidence':'section heading','source_url':source_url+'#'+section_title,'section_heading':section_title,'entry_html':body[:5000]})
+        metadata_size = size_from_heading(match.group(2))
+        heading_size = nested_size_heading(section_html, match.start())
+        resolved_size = metadata_size or heading_size
+        size_evidence = 'product metadata' if metadata_size else 'size-class heading' if heading_size else ''
+        entries.append({'candidate_id':f'{source_url}::{section_title}::plain::{index}::{name}', 'product_name':name,'image_url':image,'product_url':source_url+'#'+section_title,'criteria':{'character':character,'property':prop,'toyline':toyline,'subline':subline,'size_class':resolved_size,'year':year},'summary':sentence,'series':'','toyline_evidence':'section heading','subline_evidence':'section heading','size_evidence':size_evidence,'source_url':source_url+'#'+section_title,'section_heading':section_title,'entry_html':body[:5000]})
     return entries
 
 def search(character: str, prop: str, toyline: str, subline: str, size: str) -> dict:
@@ -283,8 +308,20 @@ def search(character: str, prop: str, toyline: str, subline: str, size: str) -> 
                 value += 2
             elif actual_subline:
                 value -= 2
-        if size and size.lower() in c['size_class'].lower():
-            value += 2
+        if size:
+            requested_size = canonical_size(size)
+            actual_size = canonical_size(c.get('size_class', ''))
+            evidence = item.get('size_evidence', '')
+            if actual_size == requested_size:
+                # Product metadata and a dedicated size-class heading are
+                # strong evidence. A descriptive comparison is deliberately
+                # not treated as equivalent evidence.
+                value += 9 if evidence in {'product metadata', 'size-class heading'} else 4
+            elif actual_size and evidence in {'product metadata', 'size-class heading'}:
+                # Size is a ranking signal, not a hard exclusion.
+                value -= 2
+            elif re.search(rf'\b{re.escape(requested_size)}(?:\s+class)?\b', text, re.I):
+                value += 1
         return value
     entries.sort(key=score, reverse=True)
     primary = pages[0]

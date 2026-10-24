@@ -53,7 +53,9 @@ Once the continuity-specific character page is found, that page supplies the
 fictional-property context. Candidate selection prioritizes the requested
 toyline, then subline or edition and size class; it does not allow a broad
 property label such as `Movie (2007)` to outrank an explicit release match such
-as `ROTF` / `Revenge of the Fallen`.
+as `ROTF` / `Revenge of the Fallen`. Size class is ranked across all supported
+classes using explicit product metadata or dedicated size-class headings; an
+incidental comparison in a description is not treated as the toy's size.
 
 Card 2 always preserves the three-position experience: the best result, a second candidate, and a third candidate before `Refine my search`. Card 3 confirms the selected toy and can save it to the device-local Toybox.
 

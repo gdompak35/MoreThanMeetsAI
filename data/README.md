@@ -96,9 +96,16 @@ The search applies this logic in order:
    Normalize release aliases such as `ROTF` and `Revenge of the Fallen` to the
    same toyline label.
 8. Rank the entries primarily against the user's toyline, then subline or
-   edition, then size class and character evidence. An explicit toyline match
-   must beat a same-character entry from a different toyline; return the
-   selected entry with its own image and first complete descriptive sentence.
+   edition, then size class and character evidence. For size class, an
+   explicit product metadata value or a dedicated heading such as `Voyager
+   Class toys`, `Deluxe Class toys`, `Leader Class toys`, or `Legends Class
+   toys` is strong evidence. A description that says a toy is similar to,
+   comparable to, or related to another size class is weak evidence and must
+   not classify the toy as that size. Size evidence raises or lowers ranking
+   confidence but does not hard-exclude an entry when the field is missing.
+   An explicit toyline match must beat a same-character entry from a different
+   toyline; return the selected entry with its own image and first complete
+   descriptive sentence.
 
 This is a general rule for every searched character. It is not a special case
 for Bumblebee, Prowl, or any other individual character.
